@@ -1,0 +1,11 @@
+1. Repo
+2. Render 2D Triangle
+	2.1. Opti Render 2D Triangle -> too slow
+3. Convert 3D to 2D Triangle
+4. Move Camera && Render scene at each frame
+
+
+
+Singleton	: for GameManager
+Factory  	: not needed
+
