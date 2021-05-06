@@ -7,8 +7,8 @@
 class Triangle2D
 {
 public:
-	Triangle2D() : Triangle2D(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, sf::Color::White, 0.0f){}
 	Triangle2D(float xA, float yA, float xB, float yB, float xC, float yC, sf::Color color, float zIndex);
+	Triangle2D(sf::Vector2f* vertices, sf::Color color, float zIndex);
 	~Triangle2D() = default;
 
 	const void CalculateBoundingBox();
@@ -17,6 +17,8 @@ public:
 	float ZIndex() { return m_zIndex; }
 
 	bool IsPixelInside(sf::Vector2f point);
+
+
 private:
 	float m_zIndex;
 	sf::Color m_color;
