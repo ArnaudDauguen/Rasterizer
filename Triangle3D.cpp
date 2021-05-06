@@ -9,15 +9,16 @@ Triangle3D::Triangle3D(float xA, float yA, float zA, float xB, float yB, float z
 	m_vertices[2] = { xC, yC, zC };
 }
 
-void Triangle3D::ProjectedVertices(sf::Vector2f* output, float aspectRatio, float fovRadian, float zScaling, float screenWidth, float screenHeight)
+void Triangle3D::ProjectedVertices(sf::Vector2f* output, float aspectRatio, float fovRadian, float zScaling, float screenWidth, float screenHeight, sf::Vector3f cameraLocation)
 {
 	for (int i = 0; i < 3; ++i) {
-		output[i].x = (m_vertices[i].x * aspectRatio * fovRadian);
-		output[i].y = (m_vertices[i].y * fovRadian);
+		sf::Vector3f translatedVertice = m_vertices[i] - cameraLocation;
+		output[i].x = (translatedVertice.x * aspectRatio * fovRadian);
+		output[i].y = (translatedVertice.y * fovRadian);
 
-		if (m_vertices[i].z != 0.0f) {
-			output[i].x /= m_vertices[i].z;
-			output[i].y /= m_vertices[i].z;
+		if (translatedVertice.z != 0.0f) {
+			output[i].x /= translatedVertice.z;
+			output[i].y /= translatedVertice.z;
 		}
 
 		//Viewport scaling

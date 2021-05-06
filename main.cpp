@@ -83,79 +83,109 @@ int main() {
         ));
     }*/
     mesh.push_back(Triangle3D(
-        0.0f, 0.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, -1.0f, -8.0f, sf::Color::White
+        0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 8.0f, sf::Color::White
     ));
     mesh.push_back(Triangle3D(
-        -1.0f, -1.0f, -10.0f, -2.0f, -1.0f, -10.0f, -1.0f, -2.0f, -8.0f, sf::Color::Blue
+        -1.0f, -1.0f, 10.0f, -2.0f, -1.0f, 10.0f, -1.0f, -2.0f, 8.0f, sf::Color::Blue
     ));
     mesh.push_back(Triangle3D(
-        1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -2.0f, 2.0f, 2.0f, -1.0f, sf::Color::Green
+        1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f, 1.0f, sf::Color::Green
     ));
 
 
-    // Triangle Projection
-    const float zNear = 0.1f;
-    const float zFar = 1000.0f;
-    const float fov = 90.0f;
-    const float aspectRatio = fScreenHeight / fScreenWidth;
-    const float fovRadian = 1.0f / tanf(fov * 0.5f / 180.0f * 3.141592f);
-    const float zScaling = zFar / (zFar - zNear);
-
-
-    std::vector<Triangle2D> triangleToRender;
-    for (auto triangle : mesh) {
-        sf::Vector2f projectedVertices[3];
-        triangle.ProjectedVertices(projectedVertices, aspectRatio, fovRadian, zScaling, fScreenWidth, fScreenHeight);
-        triangleToRender.push_back(
-            Triangle2D(
-                projectedVertices, triangle.Color(), 0
-            )
-        );
-    }
+    // Camera
+    sf::Vector3f cameraLocation = { -5.0f, 0.0f, -5.0f };
+    sf::Vector3f cameraForward = { 0.0f, 0.0f, 1.0f };
+    sf::Vector3f cameraRight = { 1.0f, 0.0f, 0.0f };
+    sf::Vector3f cameraUp = { 0.0f, 1.0f, 0.0f };
+    float cameraSpeed = 2.0f / 1000;
 
 
 
 
-    // Parcours de tous les triangles, de tous les pixels dans leur BoundingBox
-    for (auto triangle : triangleToRender) {
-        for (int x = triangle.BoundingBox()[0].x; x < triangle.BoundingBox()[1].x; ++x) {
-            for (int y = triangle.BoundingBox()[0].y; y < triangle.BoundingBox()[1].y; ++y) {
-                if (x < 0 || x >= iScreenWidth || y < 0 || y >= iScreenHeight)
-                    continue;
-                if (triangle.IsPixelInside(sf::Vector2f(static_cast<float>(x), static_cast<float>(y)))) {
-                    setPixelColor(pixels, zBuffer, iScreenWidth, iScreenHeight, x, y, triangle.Color(), triangle.ZIndex());
-                }
-            }
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-    sf::Sprite sprite(texture);
-    texture.update(pixels);
 
     // On garde la fenêtre ouverte.
     while (window.isOpen())
     {
         sf::Event event;
 
+        sf::Time elapsed = clock.restart();
+        int deltaTime = elapsed.asMilliseconds();
+
+        std::cout << deltaTime << std::endl;
+
         // Si on demande la fermeture de la fenêtre...
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
                 window.close();
+
+
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
+                cameraLocation += cameraForward * (cameraSpeed * deltaTime);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+                cameraLocation += -1.0f * cameraForward * (cameraSpeed * deltaTime);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+                cameraLocation += cameraRight * (cameraSpeed * deltaTime);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+                cameraLocation += -1.0f * cameraRight * (cameraSpeed * deltaTime);
         }
 
+
         window.clear();
+        clearScreen(pixels, zBuffer, iScreenWidth, iScreenHeight);
+
+
+
+
+
+        
+
+
+        // Triangle Projection
+        const float zNear = 0.1f;
+        const float zFar = 1000.0f;
+        const float fov = 90.0f;
+        const float aspectRatio = fScreenHeight / fScreenWidth;
+        const float fovRadian = 1.0f / tanf(fov * 0.5f / 180.0f * 3.141592f);
+        const float zScaling = zFar / (zFar - zNear);
+
+
+        std::vector<Triangle2D> triangleToRender;
+        for (auto triangle : mesh) {
+            sf::Vector2f projectedVertices[3];
+            triangle.ProjectedVertices(projectedVertices, aspectRatio, fovRadian, zScaling, fScreenWidth, fScreenHeight, cameraLocation);
+            triangleToRender.push_back(
+                Triangle2D(
+                    projectedVertices, triangle.Color(), 0
+                )
+            );
+        }
+
+
+        // Parcours de tous les triangles, de tous les pixels dans leur BoundingBox
+        for (auto triangle : triangleToRender) {
+            for (int x = triangle.BoundingBox()[0].x; x < triangle.BoundingBox()[1].x; ++x) {
+                for (int y = triangle.BoundingBox()[0].y; y < triangle.BoundingBox()[1].y; ++y) {
+                    if (x < 0 || x >= iScreenWidth || y < 0 || y >= iScreenHeight)
+                        continue;
+                    if (triangle.IsPixelInside(sf::Vector2f(static_cast<float>(x), static_cast<float>(y)))) {
+                        setPixelColor(pixels, zBuffer, iScreenWidth, iScreenHeight, x, y, triangle.Color(), triangle.ZIndex());
+                    }
+                }
+            }
+        }
+
+
+
+
+
+
+
 
         // On ecrit notre image à l'écran.
+        sf::Sprite sprite(texture);
+        texture.update(pixels);
         window.draw(sprite);
 
         window.display();

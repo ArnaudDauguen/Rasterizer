@@ -1,9 +1,8 @@
 #ifndef TRIANGLE3D_H
 #define TRIANGLE3D_H
 
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/System/Vector3.hpp>
-#include <SFML/System/Vector2.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 
 class Triangle3D
 {
@@ -14,7 +13,7 @@ public:
 	sf::Vector3f* Vertices() { return m_vertices; }
 	sf::Color Color() { return m_color; }
 
-	void ProjectedVertices(sf::Vector2f* output, float aspectRatio, float fovRadian, float zScaling, float screenWidth, float screenHeight);
+	void ProjectedVertices(sf::Vector2f* output, float aspectRatio, float fovRadian, float zScaling, float screenWidth, float screenHeight, sf::Vector3f cameraLocation);
 
 
 private:

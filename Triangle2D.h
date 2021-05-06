@@ -1,8 +1,8 @@
 #ifndef TRIANGLE2D_H
 #define TRIANGLE2D_H
 
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/System/Vector2.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 
 class Triangle2D
 {
