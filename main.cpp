@@ -3,9 +3,11 @@
 #include <SFML/Window.hpp>
 
 #include "Triangle2D.h"
+#include "Triangle3D.h"
 
 
-static void emptyArray(sf::Uint8* pixels, float* zBuffer, int width, int height)
+
+static void clearScreen(sf::Uint8* pixels, float* zBuffer, int width, int height)
 {
     for (int j = 0; j < height; ++j)
     {
@@ -35,56 +37,93 @@ static void setPixelColor(sf::Uint8* pixels, float* zBuffer, int width, int heig
 
 
 int main() {
-    const int image_width = 1280;
-    const int image_height = 720;
+    const int iScreenWidth = 1280;
+    const int iScreenHeight = 720;
+    const float fScreenWidth = static_cast<float>(iScreenWidth);
+    const float fScreenHeight = static_cast<float>(iScreenHeight);
 
-    sf::RenderWindow window(sf::VideoMode(image_width, image_height), "Projet Rasterizer");
+    sf::RenderWindow window(sf::VideoMode(iScreenWidth, iScreenHeight), "Projet Rasterizer");
     sf::Clock clock;
 
 
     // On créé le tableau de pixels.
-    auto* pixels = new sf::Uint8[image_width * image_height * 4];
-    auto* zBuffer = new float[image_width * image_height];
+    auto* pixels = new sf::Uint8[iScreenWidth * iScreenHeight * 4];
+    auto* zBuffer = new float[iScreenWidth * iScreenHeight];
 
     // On le "vide", mais ici on rend tous les pixels en gris.
-    emptyArray(pixels, zBuffer, image_width, image_height);
+    clearScreen(pixels, zBuffer, iScreenWidth, iScreenHeight);
 
     sf::Texture texture;
-    if (!texture.create(image_width, image_height))
+    if (!texture.create(iScreenWidth, iScreenHeight))
         return -1;
 
     // Liste des triangles a afficher
-    const int triangleCount = 100;
-    Triangle2D triangles[triangleCount];
+    const int triangleCount = 3;
+    std::vector<Triangle3D> mesh;
     //triangles[0] = Triangle2D(10.0f, 10.0f, 200.0f, 10.0f, 95.0f, 200.0f, sf::Color::White, 1.0f);
     //triangles[1] = Triangle2D(500.0f, 500.0f, 1200.0f, 700.0f, 500.0f, 700.0f, sf::Color::Blue, 1.0f);
     //triangles[2] = Triangle2D(150.0f, 20.0f, 800.0f, 800.0f, 1100.0f, 200.0f, sf::Color::Green, 0.0f);
-    for (int i = 0; i < triangleCount; ++i) {
-        triangles[i] = Triangle2D(
-            -100 + rand() % 400,
-            -100 + rand() % 400,
-            -100 + rand() % 400,
-            -100 + rand() % 400,
-            -100 + rand() % 400,
-            -100 + rand() % 400,
+    /*for (int i = 0; i < triangleCount; ++i) {
+        mesh.push_back(Triangle3D(
+            -100.0f + rand() % 600,
+            -100.0f + rand() % 600,
+            -100.0f + rand() % 600,
+            -100.0f + rand() % 600,
+            -100.0f + rand() % 600,
+            -100.0f + rand() % 600,
+            -100.0f + rand() % 600,
+            -100.0f + rand() % 600,
+            -100.0f + rand() % 600,
             sf::Color(
                 rand() % 255,
                 rand() % 255,
                 rand() % 255,
                 rand() % 55 + 200
-            ),
-            triangleCount + 1 - i
+            )
+        ));
+    }*/
+    mesh.push_back(Triangle3D(
+        0.0f, 0.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, -1.0f, -8.0f, sf::Color::White
+    ));
+    mesh.push_back(Triangle3D(
+        -1.0f, -1.0f, -10.0f, -2.0f, -1.0f, -10.0f, -1.0f, -2.0f, -8.0f, sf::Color::Blue
+    ));
+    mesh.push_back(Triangle3D(
+        1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -2.0f, 2.0f, 2.0f, -1.0f, sf::Color::Green
+    ));
+
+
+    // Triangle Projection
+    const float zNear = 0.1f;
+    const float zFar = 1000.0f;
+    const float fov = 90.0f;
+    const float aspectRatio = fScreenHeight / fScreenWidth;
+    const float fovRadian = 1.0f / tanf(fov * 0.5f / 180.0f * 3.141592f);
+    const float zScaling = zFar / (zFar - zNear);
+
+
+    std::vector<Triangle2D> triangleToRender;
+    for (auto triangle : mesh) {
+        sf::Vector2f projectedVertices[3];
+        triangle.ProjectedVertices(projectedVertices, aspectRatio, fovRadian, zScaling, fScreenWidth, fScreenHeight);
+        triangleToRender.push_back(
+            Triangle2D(
+                projectedVertices, triangle.Color(), 0
+            )
         );
     }
 
+
+
+
     // Parcours de tous les triangles, de tous les pixels dans leur BoundingBox
-    for (int i = 0; i < triangleCount; ++i) {
-        for (int x = triangles[i].BoundingBox()[0].x; x < triangles[i].BoundingBox()[1].x; ++x) {
-            for (int y = triangles[i].BoundingBox()[0].y; y < triangles[i].BoundingBox()[1].y; ++y) {
-                if (x < 0 || x >= image_width || y < 0 || y >= image_height)
+    for (auto triangle : triangleToRender) {
+        for (int x = triangle.BoundingBox()[0].x; x < triangle.BoundingBox()[1].x; ++x) {
+            for (int y = triangle.BoundingBox()[0].y; y < triangle.BoundingBox()[1].y; ++y) {
+                if (x < 0 || x >= iScreenWidth || y < 0 || y >= iScreenHeight)
                     continue;
-                if (triangles[i].IsPixelInside(sf::Vector2f(static_cast<float>(x), static_cast<float>(y)))) {
-                    setPixelColor(pixels, zBuffer, image_width, image_height, x, y, triangles[i].Color(), triangles[i].ZIndex());
+                if (triangle.IsPixelInside(sf::Vector2f(static_cast<float>(x), static_cast<float>(y)))) {
+                    setPixelColor(pixels, zBuffer, iScreenWidth, iScreenHeight, x, y, triangle.Color(), triangle.ZIndex());
                 }
             }
         }
