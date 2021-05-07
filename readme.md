@@ -5,5 +5,6 @@
 * Ouvrir le projet dans VisualStudio
 * Compiler en "Static Release"
 
-## Edition du niveau
-WIP
+## Déplacement dans le niveau
+* déplacements sur X et Y avec les flèhces
+* déplacements sur Z avec Z et S
