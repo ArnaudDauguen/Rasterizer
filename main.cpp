@@ -197,17 +197,45 @@ int main() {
          * (loop end)
          */
         for (auto triangle : triangleToRender) {
-            for (int x = triangle.BoundingBox()[0].x; x < triangle.BoundingBox()[1].x; ++x) {
-                if (x < 0 || x >= iScreenWidth)
-                    continue;
-                for (int y = triangle.BoundingBox()[0].y; y < triangle.BoundingBox()[1].y; ++y) {
-                    if (y < 0 || y >= iScreenHeight)
-                        continue;
-                    if (triangle.IsPixelInside(sf::Vector2f(static_cast<float>(x), static_cast<float>(y)))) {
-                        setPixelColor(pixels, zBuffer, iScreenWidth, iScreenHeight, x, y, triangle.Color(), triangle.ZIndex());
+            int lowestX = triangle.BoundingBox()[1].x < 0 ? 0 : triangle.BoundingBox()[0].x;
+            int highestX = triangle.BoundingBox()[0].x > iScreenWidth -1 ? iScreenWidth -1 : triangle.BoundingBox()[1].x;
+            int lowestY = triangle.BoundingBox()[1].y < 0 ? 0 : triangle.BoundingBox()[0].y;
+            int highestY = triangle.BoundingBox()[0].y > iScreenHeight -1 ? iScreenHeight -1 : triangle.BoundingBox()[1].y;
+            std::cout << lowestX << " " << lowestY << " " << highestX << " " << highestY << std::endl;
+
+            sf::Vector2i topLeft;
+            triangle.TopLeft(&topLeft);
+            int x = topLeft.x;
+            int y = topLeft.y;
+            std::cout << x << "           " << y << std::endl;
+            bool continueLoop = true;
+            int direction = 1;
+            bool continueLine = true;
+            bool hasReachedTriangle = true;
+            while (continueLoop) {
+                std::cout << x << " " << y << std::endl;
+                bool isOutOfScreen = x < lowestX || x > highestX;
+                x += direction;
+                if (!isOutOfScreen && triangle.IsPixelInside(sf::Vector2f(static_cast<float>(x), static_cast<float>(y)))) {
+                    setPixelColor(pixels, zBuffer, iScreenWidth, iScreenHeight, x, y, triangle.Color(), triangle.ZIndex());
+                    hasReachedTriangle = true;
+                } else {
+                    if (continueLine && hasReachedTriangle) {
+                        y += 1;
+                        continueLine = !continueLine;
+                    } else {
+                        if (hasReachedTriangle) {
+                            direction *= -1;
+                            continueLine = !continueLine;
+                            if (y > highestY)
+                                continueLoop = false;
+                        }
                     }
+                    hasReachedTriangle = false;
                 }
             }
+                
+
         }
 
         // END MAIN LOOP

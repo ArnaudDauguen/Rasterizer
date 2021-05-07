@@ -70,6 +70,17 @@ bool Triangle2D::IsPixelInside(sf::Vector2f point)
 	return !(has_neg && has_pos);
 }
 
+void Triangle2D::TopLeft(sf::Vector2i* topLeft)
+{
+	topLeft->x = static_cast<int>(m_vertices[0].x);
+	topLeft->y = static_cast<int>(m_vertices[0].y);
+	for (int i = 1; i < 2; i++)
+		if (m_vertices[i].y < topLeft->y || (m_vertices[i].y == topLeft->y && m_vertices[i].x < topLeft->x)){
+			topLeft->x = static_cast<int>(m_vertices[i].x);
+			topLeft->y = static_cast<int>(m_vertices[i].y);
+		}
+}
+
 float Triangle2D::sign(sf::Vector2f p1, sf::Vector2f p2, sf::Vector2f p3)
 {
 	return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);

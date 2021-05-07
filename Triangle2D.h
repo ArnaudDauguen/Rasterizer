@@ -18,6 +18,7 @@ public:
 	float ZIndex() { return m_zIndex; }
 
 	bool IsPixelInside(sf::Vector2f point);
+	void TopLeft(sf::Vector2i* topLeft);
 
 
 private:
