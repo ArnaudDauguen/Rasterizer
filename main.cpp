@@ -187,6 +187,15 @@ int main() {
 
 
         // Parcours de tous les triangles, de tous les pixels dans leur BoundingBox
+        //TODO Update
+        /*Il y aurait moyen de parcourir moins de pixel que la totalité de la BoundingBox.
+         * En partant du coin le plus en haut, le plus à gauche,
+         * parcourir ligne par ligne
+         * (loop start)
+            dès qu'on arrive hors du triangle on passe à la ligne du dessous et on continue dans le même sens jusqu'au bord
+            en sortant on fait demi tour (sans sauter de ligne cette fois) (eventuellement on skip les pixels deja checkés)
+         * (loop end)
+         */
         for (auto triangle : triangleToRender) {
             for (int x = triangle.BoundingBox()[0].x; x < triangle.BoundingBox()[1].x; ++x) {
                 if (x < 0 || x >= iScreenWidth)
