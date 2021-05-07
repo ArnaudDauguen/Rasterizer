@@ -21,11 +21,12 @@ Triangle3D::Triangle3D(float xA, float yA, float zA, float xB, float yB, float z
 	CalculateNormal();
 }
 
-void Triangle3D::ProjectedVertices(sf::Vector2f* output, float aspectRatio, float fovRadian, float zScaling, float screenWidth, float screenHeight, sf::Vector3f cameraLocation)
+void Triangle3D::ProjectedVertices(sf::Vector3f* output, float aspectRatio, float fovRadian, float zScaling, float screenWidth, float screenHeight, float zNear, sf::Vector3f cameraLocation)
 {
 	for (int i = 0; i < 3; ++i) {
 		output[i].x = (m_vertices[i].x * aspectRatio * fovRadian);
 		output[i].y = -(m_vertices[i].y * fovRadian); //Je sais pas pourquoi mais sans le - mes triangles se dessinnent à l'envers
+		output[i].z = m_vertices[i].z * zScaling - zNear * zScaling;
 
 		if (m_vertices[i].z != 0.0f) {
 			output[i].x /= m_vertices[i].z;

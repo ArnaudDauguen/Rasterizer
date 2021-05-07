@@ -15,6 +15,19 @@ Triangle2D::Triangle2D(float xA, float yA, float xB, float yB, float xC, float y
 	CalculateBoundingBox();
 }
 
+Triangle2D::Triangle2D(sf::Vector3f* vertices, sf::Color color)
+	: m_color(color)
+{
+	m_vertices[0] = { vertices[0].x, vertices[0].y };
+	m_vertices[1] = { vertices[1].x, vertices[1].y };
+	m_vertices[2] = { vertices[2].x, vertices[2].y };
+
+	// On prends le zIndex du milieu du triangle. C'est pas ouf mais le clipping c'est long
+	m_zIndex = (vertices[0].z + vertices[1].z + vertices[2].z) / 3;
+
+	CalculateBoundingBox();
+}
+
 Triangle2D::Triangle2D(sf::Vector2f* vertices, sf::Color color, float zIndex)
 	: m_zIndex(zIndex), m_color(color)
 {

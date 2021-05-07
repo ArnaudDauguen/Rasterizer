@@ -1,12 +1,12 @@
 [ x ] 	0. Repo
 [ x ] 	I. Render 2D Triangle
-[   ] 		I.2. Opti Render 2D Triangle -> too slow (loop from topleft pixel and then check neighbours)
+-> [   ] 		I.2. Opti Render 2D Triangle -> too slow (loop from topleft pixel and then check neighbours)
 [ x ] 	II. Convert 3D to 2D Triangle
 [ x ] 	III. Move Camera && Render scene at each frame
 [ x ] 		III.2 Render only triangles facing camera
 [   ] 		III.3 Camera Rotation
-[   ]	IV. Rework zIndex
-[   ] 	V. Near objects
+[ x ]	IV. Rework zIndex
+-> [   ] 	V. Near objects
 
 
 

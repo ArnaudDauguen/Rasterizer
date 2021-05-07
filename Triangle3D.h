@@ -15,7 +15,7 @@ public:
 	sf::Color Color() { return m_color; }
 	sf::Vector3f Normal() { return m_normal; }
 
-	void ProjectedVertices(sf::Vector2f* output, float aspectRatio, float fovRadian, float zScaling, float screenWidth, float screenHeight, sf::Vector3f cameraLocation);
+	void ProjectedVertices(sf::Vector3f* output, float aspectRatio, float fovRadian, float zScaling, float screenWidth, float screenHeight, float zNear, sf::Vector3f cameraLocation);
 	sf::Vector3f CalculateNormal();
 
 

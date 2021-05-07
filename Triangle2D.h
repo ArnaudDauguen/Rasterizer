@@ -8,6 +8,7 @@ class Triangle2D
 {
 public:
 	Triangle2D(float xA, float yA, float xB, float yB, float xC, float yC, sf::Color color, float zIndex);
+	Triangle2D(sf::Vector3f* vertices, sf::Color color);
 	Triangle2D(sf::Vector2f* vertices, sf::Color color, float zIndex);
 	~Triangle2D() = default;
 

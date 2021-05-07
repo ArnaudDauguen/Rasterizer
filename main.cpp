@@ -6,6 +6,7 @@
 #include "Triangle3D.h"
 
 
+const float floatMax = std::numeric_limits<float>::max();
 
 static void clearScreen(sf::Uint8* pixels, float* zBuffer, int width, int height)
 {
@@ -17,7 +18,7 @@ static void clearScreen(sf::Uint8* pixels, float* zBuffer, int width, int height
             pixels[4 * (j * width + i) + 1] = 50;
             pixels[4 * (j * width + i) + 2] = 50;
             pixels[4 * (j * width + i) + 3] = 255;
-            zBuffer[j * width + i] = -1;
+            zBuffer[j * width + i] = floatMax;
         }
     }
 }
@@ -25,7 +26,7 @@ static void clearScreen(sf::Uint8* pixels, float* zBuffer, int width, int height
 
 static void setPixelColor(sf::Uint8* pixels, float* zBuffer, int width, int height, int x, int y, sf::Color* color, float zIndex)
 {
-    if (zBuffer[y * width + x] < zIndex)
+    if (zBuffer[y * width + x] > zIndex) // (zIndex = 0) === topLevel triangle
     {
         pixels[4 * (y * width + x)] = color->r;
         pixels[4 * (y * width + x) + 1] = color->g;
@@ -50,13 +51,11 @@ int main() {
     auto* pixels = new sf::Uint8[iScreenWidth * iScreenHeight * 4];
     auto* zBuffer = new float[iScreenWidth * iScreenHeight];
 
-    // On le "vide", mais ici on rend tous les pixels en gris.
-    clearScreen(pixels, zBuffer, iScreenWidth, iScreenHeight);
-
     sf::Texture texture;
     if (!texture.create(iScreenWidth, iScreenHeight))
         return -1;
 
+    // INIT SCENE
     // Liste des triangles a afficher
     std::vector<Triangle3D> mesh;
     sf::Vector3f cubeVertices[8] = {
@@ -69,33 +68,37 @@ int main() {
         {0.f, 1.f, 5.f}, //6
         {1.f, 1.f, 5.f}  //7
     };
-    mesh.push_back(Triangle3D(cubeVertices[0], cubeVertices[2], cubeVertices[3], sf::Color::White)); //Front
-    mesh.push_back(Triangle3D(cubeVertices[0], cubeVertices[3], cubeVertices[1], sf::Color::White));
+    for (int i = 5; i < 7; i++) {
+        mesh.push_back(Triangle3D(cubeVertices[0], cubeVertices[2], cubeVertices[3], sf::Color::White)); //Front
+        mesh.push_back(Triangle3D(cubeVertices[0], cubeVertices[3], cubeVertices[1], sf::Color::White));
 
-    mesh.push_back(Triangle3D(cubeVertices[4], cubeVertices[6], cubeVertices[2], sf::Color::Cyan)); //Left
-    mesh.push_back(Triangle3D(cubeVertices[4], cubeVertices[2], cubeVertices[0], sf::Color::Cyan));
+        mesh.push_back(Triangle3D(cubeVertices[4], cubeVertices[6], cubeVertices[2], sf::Color::Cyan)); //Left
+        mesh.push_back(Triangle3D(cubeVertices[4], cubeVertices[2], cubeVertices[0], sf::Color::Cyan));
 
-    mesh.push_back(Triangle3D(cubeVertices[5], cubeVertices[7], cubeVertices[6], sf::Color::Yellow)); //Back
-    mesh.push_back(Triangle3D(cubeVertices[5], cubeVertices[6], cubeVertices[4], sf::Color::Yellow));
+        mesh.push_back(Triangle3D(cubeVertices[5], cubeVertices[7], cubeVertices[6], sf::Color::Yellow)); //Back
+        mesh.push_back(Triangle3D(cubeVertices[5], cubeVertices[6], cubeVertices[4], sf::Color::Yellow));
 
-    mesh.push_back(Triangle3D(cubeVertices[1], cubeVertices[3], cubeVertices[7], sf::Color::Green)); //Right
-    mesh.push_back(Triangle3D(cubeVertices[1], cubeVertices[7], cubeVertices[5], sf::Color::Green));
+        mesh.push_back(Triangle3D(cubeVertices[1], cubeVertices[3], cubeVertices[7], sf::Color::Green)); //Right
+        mesh.push_back(Triangle3D(cubeVertices[1], cubeVertices[7], cubeVertices[5], sf::Color::Green));
 
-    mesh.push_back(Triangle3D(cubeVertices[2], cubeVertices[6], cubeVertices[7], sf::Color::Blue)); //Top
-    mesh.push_back(Triangle3D(cubeVertices[2], cubeVertices[7], cubeVertices[3], sf::Color::Blue));
-    
-    mesh.push_back(Triangle3D(cubeVertices[5], cubeVertices[4], cubeVertices[0], sf::Color::Red)); //Bottom
-    mesh.push_back(Triangle3D(cubeVertices[5], cubeVertices[0], cubeVertices[1], sf::Color::Red));
-    
+        mesh.push_back(Triangle3D(cubeVertices[2], cubeVertices[6], cubeVertices[7], sf::Color::Blue)); //Top
+        mesh.push_back(Triangle3D(cubeVertices[2], cubeVertices[7], cubeVertices[3], sf::Color::Blue));
 
+        mesh.push_back(Triangle3D(cubeVertices[5], cubeVertices[4], cubeVertices[0], sf::Color::Red)); //Bottom
+        mesh.push_back(Triangle3D(cubeVertices[5], cubeVertices[0], cubeVertices[1], sf::Color::Red));
+
+        // On bouge les coins vers le fond pour faire un second cube
+        for (int l = 0; l < 8; ++l)
+            cubeVertices[l].z += i;
+    }
 
     // Camera
     sf::Vector3f cameraLocation = { 0.0f, 0.0f, 0.0f };
     sf::Vector3f cameraRight = { 1.0f, 0.0f, 0.0f };    // x
     sf::Vector3f cameraUp = { 0.0f, 1.0f, 0.0f };       // y
-    sf::Vector3f cameraForward = { 0.0f, 0.0f, 1.0f };  // z, currently not used
-    float cameraSpeed = 2.0f;
-
+    sf::Vector3f cameraForward = { 0.0f, 0.0f, 1.0f };  // z, pas utilisé (devrait être calculé à chaque frame après rotation camera)
+    float cameraSpeed = 4.0f;
+    // END INIT SCENE
 
 
 
@@ -115,7 +118,7 @@ int main() {
             if (event.type == sf::Event::Closed)
                 window.close();
 
-
+            // Inputs
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
                 cameraLocation += cameraForward * (cameraSpeed * deltaTime);
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
@@ -132,16 +135,14 @@ int main() {
         //std::cout << cameraLocation.x << " " << cameraLocation.y << " " << cameraLocation.z << std::endl;
 
 
+        // Nettoyage du plan de travail avant de repeindre le tout
         window.clear();
         clearScreen(pixels, zBuffer, iScreenWidth, iScreenHeight);
 
 
-
-
-
         
 
-
+        // MAIN LOOP
         // Triangle Projection
         const float zNear = 0.1f;
         const float zFar = 1000.0f;
@@ -154,34 +155,33 @@ int main() {
         std::vector<Triangle2D> triangleToRender;
         for (auto inTri : mesh) {
             
-            sf::Vector3f translatedVertices[3] = {
+            sf::Vector3f tmpTranslatedVertices[3] = {
                 inTri.Vertices()[0] - cameraLocation,
                 inTri.Vertices()[1] - cameraLocation,
                 inTri.Vertices()[2] - cameraLocation 
             };
 
-            Triangle3D triangle = Triangle3D(translatedVertices[0], translatedVertices[1], translatedVertices[2], inTri.Color());
+            Triangle3D outTri = Triangle3D(tmpTranslatedVertices[0], tmpTranslatedVertices[1], tmpTranslatedVertices[2], inTri.Color());
             
             // Determine si le triangle est visible (face a la camera) et s'il faut l'afficher
-            triangle.CalculateNormal().x;
+            outTri.CalculateNormal().x;
             bool isTriangleFacingCamera = (
-                triangle.Normal().x * (triangle.Vertices()[0].x - cameraLocation.x) +
-                triangle.Normal().y * (triangle.Vertices()[0].y - cameraLocation.y) +
-                triangle.Normal().z * (triangle.Vertices()[0].z - cameraLocation.z)
+                outTri.Normal().x * (outTri.Vertices()[0].x - cameraLocation.x) +
+                outTri.Normal().y * (outTri.Vertices()[0].y - cameraLocation.y) +
+                outTri.Normal().z * (outTri.Vertices()[0].z - cameraLocation.z)
             ) < 0.0f;
             if (!isTriangleFacingCamera) continue;
 
-            sf::Vector2f projectedVertices[3];
-            triangle.ProjectedVertices(projectedVertices, aspectRatio, fovRadian, zScaling, fScreenWidth, fScreenHeight, cameraLocation);
-
+            sf::Vector3f projectedVertices[3];
+            outTri.ProjectedVertices(projectedVertices, aspectRatio, fovRadian, zScaling, fScreenWidth, fScreenHeight, zNear, cameraLocation);
             /*std::cout << " " << std::endl;
             std::cout << projectedVertices[0].x << " " << projectedVertices[0].y << std::endl;
             std::cout << projectedVertices[1].x << " " << projectedVertices[1].y << std::endl;
             std::cout << projectedVertices[2].x << " " << projectedVertices[2].y << std::endl;*/
+
+            // Ajout à la liste des triangles à afficher
             triangleToRender.push_back(
-                Triangle2D(
-                    projectedVertices, triangle.Color(), 0
-                )
+                Triangle2D(projectedVertices, outTri.Color())
             );
         }
 
@@ -201,7 +201,7 @@ int main() {
             }
         }
 
-
+        // END MAIN LOOP
 
 
 
